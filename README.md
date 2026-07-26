@@ -1,10 +1,5 @@
 # HTTP Debugger Pro Keygen — Electron GUI
-## How to use
-- click on **Write to registry & generate key**
-- is will auto activate it
 
-##
-##
 A beautiful, animated Electron application with Three.js 3D background and Tailwind CSS.
 
 ## Features

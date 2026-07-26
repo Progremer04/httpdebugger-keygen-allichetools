@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Alliche Tools — HTTP Debugger Keygen</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:#020810;color:#e2e8f0;
+  font-family:'JetBrains Mono',monospace;
+  height:100%;overflow:hidden;
+  user-select:none;-webkit-user-select:none;
+}
+
+/* 3-D canvas — always behind */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+#scanline{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.045) 3px,rgba(0,0,0,.045) 4px);
+}
+
+/* Outer shell */
+#shell{position:relative;z-index:10;width:100vw;height:100vh;display:flex;flex-direction:column}
+
+/* ── Titlebar ── */
+#tb{
+  flex-shrink:0;-webkit-app-region:drag;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 18px;
+  background:rgba(1,5,15,.93);
+  border-bottom:1px solid rgba(0,245,255,.11);
+  backdrop-filter:blur(24px);
+}
+#tb button{-webkit-app-region:no-drag;cursor:pointer;border:none;background:none;font-family:inherit}
+.tb-logo{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(0,180,255,.5))}
+
+/* ── Scroll area ── */
+#scroll{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  scroll-behavior:smooth;
+  padding:24px 20px 48px;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+}
+#scroll::-webkit-scrollbar{width:4px}
+#scroll::-webkit-scrollbar-track{background:transparent}
+#scroll::-webkit-scrollbar-thumb{background:rgba(0,245,255,.22);border-radius:2px}
+#scroll::-webkit-scrollbar-thumb:hover{background:rgba(0,245,255,.45)}
+
+/* ── Glass card ── */
+.card{
+  width:100%;max-width:560px;
+  background:linear-gradient(145deg,rgba(4,12,35,.88),rgba(2,7,22,.93));
+  border:1px solid rgba(0,245,255,.13);border-radius:18px;
+  backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+  box-shadow:0 0 60px rgba(0,245,255,.05),0 28px 70px rgba(0,0,0,.55);
+  padding:22px 24px;
+}
+
+/* ── About card special ── */
+.about-card{
+  background:linear-gradient(145deg,rgba(6,15,42,.9),rgba(2,8,26,.95));
+  border:1px solid rgba(255,165,0,.18);
+  box-shadow:0 0 60px rgba(255,140,0,.06),0 24px 60px rgba(0,0,0,.55);
+}
+.about-card .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,140,0,.25),transparent);margin:14px 0}
+
+/* ── Field box ── */
+.fbox{
+  border-radius:10px;padding:13px 18px;min-height:50px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.fbox-green{background:rgba(0,255,159,.04);border:1px solid rgba(0,255,159,.2)}
+.fbox-cyan {background:rgba(0,245,255,.04);border:1px solid rgba(0,245,255,.18)}
+
+/* ── Segments ── */
+.seg{
+  display:inline-block;padding:3px 9px;border-radius:6px;
+  background:rgba(0,245,255,.07);border:1px solid rgba(0,245,255,.22);
+  color:#00f5ff;font-weight:700;font-size:.95rem;letter-spacing:.06em;
+  text-shadow:0 0 12px rgba(0,245,255,.55);
+}
+.seg7c{
+  background:rgba(191,90,242,.1);border-color:rgba(191,90,242,.3);
+  color:#bf5af2;text-shadow:0 0 12px rgba(191,90,242,.55);
+}
+.seg-dot{color:rgba(0,245,255,.18);font-size:.7rem;margin:0 1px}
+
+/* ── Key-char drop ── */
+.kc{display:inline-block;opacity:0;transform:translateY(7px);animation:kcdrop .05s ease forwards}
+@keyframes kcdrop{to{opacity:1;transform:translateY(0)}}
+
+/* ── Label ── */
+.lbl{font-size:.64rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#2e4060;margin-bottom:6px;display:block}
+
+/* ── Copy button ── */
+.cp{
+  flex-shrink:0;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  color:#64748b;font-family:inherit;font-size:.66rem;font-weight:600;
+  padding:3px 10px;border-radius:5px;cursor:pointer;
+  transition:background .15s,border-color .15s,color .15s;letter-spacing:.05em;
+}
+.cp:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.22);color:#94a3b8}
+
+/* ── Version input ── */
+.vinp{
+  flex:1;background:rgba(0,0,0,.45);border:1px solid rgba(255,180,0,.22);
+  color:#e2e8f0;font-family:inherit;font-size:.8rem;
+  padding:8px 13px;border-radius:8px;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.vinp:focus{border-color:rgba(255,180,0,.5);box-shadow:0 0 0 3px rgba(255,180,0,.07)}
+.vinp::placeholder{color:#1e293b}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* ── Badges ── */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:4px;
+  font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+}
+.badge-ok  {background:rgba(0,255,159,.08);color:#00ff9f;border:1px solid rgba(0,255,159,.2)}
+.badge-sim {background:rgba(255,180,0,.08); color:#ffa500;border:1px solid rgba(255,180,0,.2)}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:bdot 1.5s ease infinite}
+@keyframes bdot{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── Action button ── */
+.btn-action{
+  width:100%;padding:17px 24px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(0,245,255,.1),rgba(10,132,255,.14));
+  border:1px solid rgba(0,245,255,.4);
+  color:#00f5ff;font-family:inherit;font-size:.82rem;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:transform .2s,box-shadow .2s,border-color .2s;
+}
+.btn-action::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,245,255,.17),rgba(10,132,255,.2));
+  opacity:0;transition:opacity .2s}
+.btn-action:hover::before{opacity:1}
+.btn-action:hover{transform:translateY(-2px);
+  box-shadow:0 0 30px rgba(0,245,255,.35),0 0 70px rgba(0,245,255,.12);
+  border-color:rgba(0,245,255,.7)}
+.btn-action:active{transform:translateY(0)}
+.btn-action:disabled{opacity:.32;cursor:not-allowed;transform:none !important;box-shadow:none !important}
+
+/* ── Copy .reg button ── */
+.btn-sec{
+  width:100%;padding:10px 24px;border-radius:10px;
+  background:rgba(0,255,159,.04);border:1px solid rgba(0,255,159,.18);
+  color:#00ff9f;font-family:inherit;font-size:.7rem;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  cursor:pointer;transition:background .15s,box-shadow .15s,border-color .15s;
+}
+.btn-sec:hover{background:rgba(0,255,159,.09);border-color:rgba(0,255,159,.36);
+  box-shadow:0 0 16px rgba(0,255,159,.14)}
+
+/* ── TG button ── */
+.btn-tg{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 20px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(0,136,204,.15),rgba(0,100,180,.1));
+  border:1px solid rgba(0,136,204,.35);
+  color:#29b6f6;font-family:inherit;font-size:.75rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;
+}
+.btn-tg:hover{background:linear-gradient(135deg,rgba(0,136,204,.25),rgba(0,100,180,.2));
+  border-color:rgba(0,136,204,.6);box-shadow:0 0 18px rgba(0,136,204,.25);transform:translateY(-1px)}
+.btn-tg:active{transform:translateY(0)}
+
+/* ── History ── */
+.hist-row{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 16px;border-bottom:1px solid rgba(255,255,255,.04);
+  animation:fadeUp .22s ease both;opacity:0;
+}
+
+/* ── Status ── */
+.st-ok {color:#00ff9f;font-size:.7rem;text-align:center;padding-top:2px}
+.st-err{color:#ff375f;font-size:.7rem;text-align:center;padding-top:2px}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:20px;left:50%;
+  transform:translateX(-50%) translateY(70px);opacity:0;z-index:999;
+  transition:transform .32s cubic-bezier(.34,1.56,.64,1),opacity .25s;
+  background:linear-gradient(135deg,rgba(4,12,35,.95),rgba(2,7,22,.98));
+  border:1px solid rgba(0,255,159,.3);border-radius:10px;
+  padding:9px 22px;font-size:.78rem;font-weight:600;color:#00ff9f;
+  backdrop-filter:blur(20px);white-space:nowrap;
+}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ── Animations ── */
+@keyframes spin    {to{transform:rotate(360deg)}}
+@keyframes glow    {0%,100%{filter:drop-shadow(0 0 6px rgba(0,200,255,.5))}50%{filter:drop-shadow(0 0 14px rgba(0,200,255,.85))}}
+@keyframes orangeGlow{0%,100%{filter:drop-shadow(0 0 8px rgba(255,140,0,.4))}50%{filter:drop-shadow(0 0 20px rgba(255,140,0,.75))}}
+@keyframes floatY  {0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes fadeUp  {from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes slideIn {from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes shimmer {0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes rotateSlow{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="scanline"></div>
+
+<div id="shell">
+
+  <!-- ══ TITLEBAR ══ -->
+  <div id="tb">
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="logo-shield.png" class="tb-logo" style="animation:glow 3s ease infinite" alt="logo"/>
+      <div style="display:flex;flex-direction:column;line-height:1.2">
+        <span style="color:#00f5ff;font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase">Alliche Tools</span>
+        <span style="color:#1e3a5f;font-size:.58rem;letter-spacing:.12em">HTTP Debugger · Keygen</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:7px">
+      <button onclick="ipcRenderer.send('win-minimize')" title="Minimise"
+        style="width:14px;height:14px;border-radius:50%;background:#f59e0b33;border:1px solid #f59e0b66;color:#f59e0b;font-size:8px;display:flex;align-items:center;justify-content:center">─</button>
+      <button onclick="ipcRenderer.send('win-maximize')" title="Maximise"
+        style="width:14px;height:14px;border-radius:50%;background:#22c55e33;border:1px solid #22c55e66;color:#22c55e;font-size:7px;display:flex;align-items:center;justify-content:center">⬜</button>
+      <button onclick="ipcRenderer.send('win-close')" title="Close"
+        style="width:14px;height:14px;border-radius:50%;background:#ef444433;border:1px solid #ef444466;color:#ef4444;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+  </div>
+
+  <!-- ══ SCROLLABLE BODY ══ -->
+  <div id="scroll">
+
+    <!-- ── Hero branding ── -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;animation:floatY 6s ease infinite;margin-top:4px">
+      <div style="position:relative;width:88px;height:88px">
+        <!-- outer ring -->
+        <div style="position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(255,140,0,.2);animation:rotateSlow 12s linear infinite"></div>
+        <div style="position:absolute;inset:-12px;border-radius:50%;border:1px dashed rgba(0,245,255,.1);animation:rotateSlow 20s linear infinite reverse"></div>
+        <img src="logo-shield.png" alt="Alliche Tools"
+             style="width:88px;height:88px;object-fit:contain;animation:orangeGlow 3s ease infinite;position:relative;z-index:2"/>
+      </div>
+      <h1 style="color:#00f5ff;font-size:1.2rem;font-weight:700;letter-spacing:.22em;text-shadow:0 0 22px rgba(0,245,255,.5);margin-top:6px">
+        KEY GENERATOR
+      </h1>
+      <p style="color:#1e3a5f;font-size:.64rem;letter-spacing:.1em">
+        HKCU\Software\MadeForNet\HTTPDebuggerPro
+      </p>
+    </div>
+
+    <!-- ── System info ── -->
+    <div class="card" style="padding:14px 20px;animation:slideIn .38s ease both">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;font-size:.68rem">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:#2e4060">Platform</span>
+          <span id="si-platform" style="color:#64748b;font-weight:600">—</span>
+        </div>
+        <div style="width:1px;height:12px;background:rgba(255,255,255,.06)"></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:#2e4060">Serial</span>
+          <span id="si-serial" style="color:#00f5ff;font-weight:600;letter-spacing:.04em">detecting…</span>
+          <span id="si-serial-badge"></span>
+        </div>
+        <div style="width:1px;height:12px;background:rgba(255,255,255,.06)"></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="color:#2e4060">AppVer</span>
+          <span id="si-appver" style="font-weight:600">detecting…</span>
+          <span id="si-appver-badge"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Main keygen card ── -->
+    <div class="card" style="animation:slideIn .42s .04s ease both;display:flex;flex-direction:column;gap:16px">
+
+      <!-- Version override -->
+      <div style="background:rgba(255,165,0,.03);border:1px solid rgba(255,165,0,.14);border-radius:12px;padding:14px 16px">
+        <label class="lbl" style="color:rgba(255,165,0,.7);margin-bottom:8px">Version Override</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <input id="ver-input" type="number" min="1" class="vinp"
+                 placeholder="Auto-detected from AppVer registry — leave blank"/>
+          <div style="text-align:center;min-width:56px;flex-shrink:0">
+            <div id="ver-display" style="color:#ffa500;font-size:1.55rem;font-weight:700;text-shadow:0 0 14px rgba(255,140,0,.45);line-height:1">—</div>
+            <div style="color:#2a3010;font-size:.58rem;letter-spacing:.08em;margin-top:2px">parsed ver</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Value Name -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+          <label class="lbl" style="margin-bottom:0">Value Name</label>
+          <button class="cp" onclick="copyField('name')"><span id="lbl-name">copy</span></button>
+        </div>
+        <div class="fbox fbox-green">
+          <span id="key-name" style="color:#00ff9f;font-size:.95rem;font-weight:700;letter-spacing:.06em;text-shadow:0 0 10px rgba(0,255,159,.4)">—</span>
+        </div>
+      </div>
+
+      <!-- Value Data -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+          <label class="lbl" style="margin-bottom:0">Value Data</label>
+          <button class="cp" onclick="copyField('value')"><span id="lbl-value">copy</span></button>
+        </div>
+        <div class="fbox fbox-cyan" style="flex-wrap:wrap;justify-content:center;min-height:56px">
+          <div id="key-display" style="color:#1e3050;font-size:.82rem">press the button below</div>
+        </div>
+        <p style="margin-top:5px;font-size:.6rem;color:#1a2a3a">Format: XX·XX·XX·7C·XX·XX·XX·XX (16 hex chars)</p>
+      </div>
+
+      <!-- Separator -->
+      <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(0,245,255,.1),transparent)"></div>
+
+      <!-- Big button -->
+      <button id="btn-main" class="btn-action" onclick="run()">
+        <svg id="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span id="btn-label">Write to Registry &amp; Generate Key</span>
+      </button>
+
+      <!-- Status -->
+      <div id="status-row" style="display:none;font-size:.7rem;text-align:center;letter-spacing:.03em"></div>
+
+      <!-- Copy .reg -->
+      <button id="btn-reg" class="btn-sec" onclick="copyAll()" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copy .reg File Contents
+      </button>
+    </div>
+
+    <!-- ── History ── -->
+    <div style="width:100%;max-width:560px;animation:slideIn .45s .07s ease both">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 2px">
+        <span style="color:#1a2a40;font-size:.6rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase">Generation History</span>
+        <button onclick="clearHistory()"
+          style="color:#1a2a40;font-size:.6rem;cursor:pointer;transition:color .15s;background:none;border:none;font-family:inherit;letter-spacing:.06em"
+          onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#1a2a40'">clear</button>
+      </div>
+      <div style="background:linear-gradient(145deg,rgba(4,12,35,.78),rgba(2,7,22,.88));border:1px solid rgba(0,245,255,.09);border-radius:14px;overflow:hidden;max-height:140px;overflow-y:auto">
+        <div id="hist">
+          <div style="text-align:center;padding:14px;color:#1a2a3a;font-size:.68rem">No keys generated yet</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ABOUT CARD ══ -->
+    <div class="card about-card" style="animation:slideIn .5s .1s ease both;display:flex;flex-direction:column;gap:0">
+
+      <!-- Top: mascot + brand text -->
+      <div style="display:flex;align-items:center;gap:18px">
+        <!-- Mascot image -->
+        <div style="flex-shrink:0;position:relative">
+          <div style="position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(255,140,0,.25);animation:rotateSlow 10s linear infinite"></div>
+          <img src="logo-mascot.png" alt="Alliche Tools mascot"
+               style="width:80px;height:80px;object-fit:contain;border-radius:50%;
+                      background:rgba(6,18,50,.6);border:2px solid rgba(255,140,0,.25);
+                      box-shadow:0 0 24px rgba(255,140,0,.12);
+                      position:relative;z-index:2"/>
+        </div>
+
+        <!-- Brand text -->
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="
+              font-size:1.15rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+              background:linear-gradient(90deg,#ffa500,#ffcc44,#ffa500);
+              background-size:200% auto;
+              -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+              animation:shimmer 3s linear infinite;
+            ">ALLICHE</span>
+            <span style="color:#64748b;font-size:1rem;font-weight:600;letter-spacing:.14em">TOOLS</span>
+          </div>
+          <p style="color:#3a4a6a;font-size:.68rem;line-height:1.55;letter-spacing:.02em">
+            Helps you find, extract, and automate what matters.<br/>
+            Smart tools, powerful bots, and clean workflows —<br/>
+            all built for speed and simplicity.
+          </p>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Bottom: TG link + shield logo -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <button class="btn-tg" onclick="ipcRenderer.send('open-url','https://t.me/allichetools')">
+          <!-- Telegram SVG -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#29b6f6">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+          </svg>
+          @allichetools
+        </button>
+
+        <div style="display:flex;align-items:center;gap:10px">
+          <!-- Both logos small -->
+          <img src="logo-mascot.png" style="width:32px;height:32px;object-fit:contain;border-radius:50%;opacity:.7;filter:drop-shadow(0 0 4px rgba(255,140,0,.3))"/>
+          <img src="logo-shield.png" style="width:28px;height:28px;object-fit:contain;opacity:.7;filter:drop-shadow(0 0 5px rgba(0,180,255,.35))"/>
+          <span style="color:#1a2a40;font-size:.6rem;letter-spacing:.06em">v1.0.0</span>
+        </div>
+      </div>
+
+    </div><!-- /about -->
+
+    <!-- Bottom spacer -->
+    <div style="height:8px"></div>
+
+  </div><!-- /scroll -->
+</div><!-- /shell -->
+
+<!-- Toast -->
+<div id="toast">✓ Copied</div>
+
+<script>
+const { ipcRenderer } = require('electron');
+let sysInfo = null, curName = '', curValue = '', history = [];
+
+// ── Init system info ──────────────────────────────────────────────────────────
+ipcRenderer.invoke('get-system-info').then(info => {
+  sysInfo = info;
+  const isWin = info.platform === 'win32';
+
+  document.getElementById('si-platform').textContent = info.platform;
+
+  const serial = info.volumeSerial != null ? info.volumeSerial : info.volumeSerialSim;
+  document.getElementById('si-serial').textContent = '0x' + (serial>>>0).toString(16).toUpperCase().padStart(8,'0');
+  document.getElementById('si-serial-badge').innerHTML = info.volumeSerial != null
+    ? '<span class="badge badge-ok"><span class="badge-dot"></span>real</span>'
+    : '<span class="badge badge-sim"><span class="badge-dot"></span>simulated</span>';
+
+  if (info.appVersion) {
+    const pv = parseVer(info.appVersion);
+    document.getElementById('si-appver').textContent = info.appVersion + '  →  ' + pv;
+    document.getElementById('si-appver').style.color = '#00ff9f';
+    document.getElementById('si-appver-badge').innerHTML = '<span class="badge badge-ok"><span class="badge-dot"></span>found</span>';
+    document.getElementById('ver-display').textContent = pv || 1;
+  } else {
+    document.getElementById('si-appver').textContent = isWin ? 'not installed' : 'N/A';
+    document.getElementById('si-appver').style.color = '#ffa500';
+    document.getElementById('si-appver-badge').innerHTML = isWin
+      ? '<span class="badge badge-sim"><span class="badge-dot"></span>install app</span>'
+      : '<span class="badge badge-sim"><span class="badge-dot"></span>windows only</span>';
+    document.getElementById('ver-display').textContent = '1';
+  }
+
+  if (!isWin) {
+    document.getElementById('btn-main').disabled = true;
+    document.getElementById('btn-label').textContent = 'Requires Windows';
+    setStatus('⚠  Registry write requires Windows', false);
+  }
+});
+
+document.getElementById('ver-input').addEventListener('input', () => {
+  const v = document.getElementById('ver-input').value.trim();
+  document.getElementById('ver-display').textContent = v
+    ? (parseInt(v) || '—')
+    : (sysInfo && sysInfo.appVersion ? (parseVer(sysInfo.appVersion) || 1) : 1);
+});
+
+// ── Main action ───────────────────────────────────────────────────────────────
+async function run() {
+  const btn = document.getElementById('btn-main');
+  const icon = document.getElementById('btn-icon');
+  const lbl  = document.getElementById('btn-label');
+
+  btn.disabled = true; lbl.textContent = 'Working…';
+  icon.style.animation = 'spin .7s linear infinite';
+
+  const ov = document.getElementById('ver-input').value.trim();
+  const res = await ipcRenderer.invoke('write-and-generate', {
+    versionOverride: ov !== '' ? parseInt(ov) : null
+  });
+
+  icon.style.animation = ''; btn.disabled = false;
+  lbl.textContent = 'Write to Registry & Generate Key';
+
+  if (res.valueName) renderName(res.valueName);
+  if (res.keyValue)  renderValue(res.keyValue);
+
+  if (res.success) {
+    curName = res.valueName; curValue = res.keyValue;
+    setStatus('✓  Written to HKCU\\Software\\MadeForNet\\HTTPDebuggerPro', true);
+    document.getElementById('btn-reg').style.display = 'flex';
+    if (res.parsedVer != null) document.getElementById('ver-display').textContent = res.parsedVer;
+    addHistory(curName, curValue);
+    showToast('Key written to registry!');
+    setTimeout(() => document.getElementById('scroll').scrollTo({top:99999,behavior:'smooth'}), 80);
+  } else {
+    if (res.valueName && res.keyValue) {
+      curName = res.valueName; curValue = res.keyValue;
+      document.getElementById('btn-reg').style.display = 'flex';
+      addHistory(curName, curValue);
+    }
+    setStatus('✗  ' + (res.error || 'Write failed — try running as Administrator'), false);
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderName(n) { document.getElementById('key-name').textContent = n; }
+
+function renderValue(key) {
+  const d = document.getElementById('key-display');
+  const segs = Array.from({length:8}, (_,i) => key.slice(i*2,i*2+2));
+  d.innerHTML = '';
+  segs.forEach((seg,i) => {
+    if (i > 0) { const dot = document.createElement('span'); dot.className='seg-dot'; dot.textContent='·'; d.appendChild(dot); }
+    const box = document.createElement('span');
+    box.className = 'seg' + (seg==='7C'?' seg7c':'');
+    box.style.animation = `fadeUp .3s ${i*.05}s both`;
+    [...seg].forEach((ch,ci) => {
+      const s = document.createElement('span'); s.className='kc'; s.textContent=ch;
+      s.style.animationDelay=`${i*.05+ci*.025}s`; box.appendChild(s);
+    });
+    d.appendChild(box);
+  });
+}
+
+function setStatus(msg, ok) {
+  const el = document.getElementById('status-row');
+  el.style.display='block'; el.textContent=msg; el.className=ok?'st-ok':'st-err';
+}
+
+// ── Copy ──────────────────────────────────────────────────────────────────────
+function copyField(field) {
+  const text = field==='name' ? curName : curValue;
+  if (!text || text==='—') return;
+  ipcRenderer.send('copy-text', text);
+  const lbl = document.getElementById('lbl-'+field);
+  lbl.textContent='✓'; setTimeout(()=>lbl.textContent='copy',1500);
+  showToast(field==='name'?'Name copied!':'Key copied!');
+}
+function copyAll() {
+  if (!curName||!curValue) return;
+  const text=`Windows Registry Editor Version 5.00\n\n[HKEY_CURRENT_USER\\Software\\MadeForNet\\HTTPDebuggerPro]\n"${curName}"="${curValue}"`;
+  ipcRenderer.send('copy-text',text); showToast('.reg contents copied!');
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+function addHistory(name,value){ history.unshift({name,value,t:new Date()}); if(history.length>30)history.pop(); renderHistory(); }
+function renderHistory(){
+  const el=document.getElementById('hist');
+  if(!history.length){ el.innerHTML='<div style="text-align:center;padding:14px;color:#1a2a3a;font-size:.68rem">No keys generated yet</div>'; return; }
+  el.innerHTML=history.map((h,i)=>`
+    <div class="hist-row" style="animation-delay:${i*.02}s">
+      <span style="color:#00ff9f;font-size:.7rem;font-weight:700;min-width:130px;flex-shrink:0">${h.name}</span>
+      <span style="color:#0a84ff;font-size:.7rem;flex:1;text-align:center;opacity:.75;letter-spacing:.04em">${h.value}</span>
+      <span style="color:#1e293b;font-size:.62rem;flex-shrink:0">${fmt(h.t)}</span>
+    </div>`).join('');
+}
+function clearHistory(){ history=[]; renderHistory(); }
+function fmt(d){ return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent='✓ '+msg; t.classList.add('show');
+  clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'),2300);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function parseVer(s){
+  if(!s)return 0; const c=[];
+  for(let i=s.length-1;i>=0;i--){ if(s[i]===' ')break; if(s[i]!=='.')c.push(s[i]); }
+  c.reverse(); const r=c.join(''); return /^\d+$/.test(r)?parseInt(r,10):0;
+}
+</script>
+
+<!-- Three.js 3-D background -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+(function(){
+  const canvas=document.getElementById('bg');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,1000);
+  camera.position.z=28;
+
+  // Particles — mix cyan, green, orange (brand colours)
+  const N=1400;
+  const pos=new Float32Array(N*3),col=new Float32Array(N*3);
+  const pal=[[0,.96,1],[0,1,.62],[1,.55,0],[.75,.35,.95],[.04,.52,1]];
+  for(let i=0;i<N;i++){
+    pos[i*3]=(Math.random()-.5)*140; pos[i*3+1]=(Math.random()-.5)*100; pos[i*3+2]=(Math.random()-.5)*70;
+    const c=pal[i%pal.length]; col[i*3]=c[0]; col[i*3+1]=c[1]; col[i*3+2]=c[2];
+  }
+  const pGeo=new THREE.BufferGeometry();
+  pGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  pGeo.setAttribute('color',   new THREE.BufferAttribute(col,3));
+  scene.add(new THREE.Points(pGeo,new THREE.PointsMaterial({
+    size:.4,vertexColors:true,transparent:true,opacity:.42,
+    blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true
+  })));
+
+  const wire=(geo,color,op)=>new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color,wireframe:true,transparent:true,opacity:op}));
+  const t1=wire(new THREE.TorusGeometry(13,.3,8,72),0x00f5ff,.06);
+  const t2=wire(new THREE.TorusGeometry(19,.16,5,88),0xff8c00,.028);
+  const ico=wire(new THREE.IcosahedronGeometry(9,1),0x0a84ff,.038);
+  t1.rotation.x=Math.PI/3; scene.add(t1,t2,ico);
+
+  const grid=new THREE.GridHelper(260,48,0x00f5ff,0x00f5ff);
+  grid.material.opacity=.018; grid.material.transparent=true; grid.position.y=-24; scene.add(grid);
+
+  const mouse={x:0,y:0};
+  window.addEventListener('mousemove',e=>{mouse.x=(e.clientX/innerWidth-.5)*2;mouse.y=-(e.clientY/innerHeight-.5)*2});
+
+  let t=0;
+  (function anim(){
+    requestAnimationFrame(anim); t+=.004;
+    scene.children[0].rotation.y=t*.065; scene.children[0].rotation.x=t*.022;
+    t1.rotation.z=t*.11; t1.rotation.y=t*.038;
+    t2.rotation.x=t*.08; t2.rotation.z=t*.05;
+    ico.rotation.x=t*.055; ico.rotation.y=t*.09;
+    camera.position.x+=(mouse.x*2.4-camera.position.x)*.026;
+    camera.position.y+=(mouse.y*1.7-camera.position.y)*.026;
+    camera.lookAt(scene.position);
+    renderer.render(scene,camera);
+  })();
+
+  window.addEventListener('resize',()=>{
+    camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "httpdebugger-keygen",
+  "version": "1.0.0",
+  "description": "HTTP Debugger Pro Keygen — by Alliche Tools",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^28.0.0"
+  }
+}
